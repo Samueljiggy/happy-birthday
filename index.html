@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Ensures proper scaling on mobile devices -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy 18th Birthday, Chimezunem!</title>
+  <!-- Google Fonts & Bootstrap CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+    p {
+      color: #555;
+    }
+    /* Center the canvas in a responsive container */
+    .cake-container {
+      margin: 0 auto;
+      max-width: 600px; /* The canvas will not exceed 600px wide on larger screens */
+      width: 90vw;      /* Use up to 90% of the viewport width on small screens */
+    }
+    canvas {
+      display: block;
+      background: #fff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      margin: 0 auto;
+    }
+    button {
+      margin: 20px auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Happy 18th Birthday, Chimezunem!</h1>
+  <p>Make a wish and blow!</p>
+
+  <!-- Responsive container for the cake canvas -->
+  <div class="cake-container">
+    <canvas id="cakeCanvas"></canvas>
+  </div>
+  <button id="blowButton" class="btn btn-primary">Make a Wish then Tap here to Blow Candle</button>
+
+  <script>
+    // Global variables to control the candle flame state
+    let candlesLit = true;
+    let flameAlpha = 1;
+    const numCandles = 5; // Number of candles to draw
+
+    const canvas = document.getElementById('cakeCanvas');
+    const ctx = canvas.getContext('2d');
+    const blowButton = document.getElementById('blowButton');
+
+    // Utility function: Draw a rounded rectangle
+    function drawRoundedRect(ctx, x, y, width, height, radius, fillStyle) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+      ctx.fillStyle = fillStyle;
+      ctx.fill();
+    }
+    
+    // Draw a wavy icing line on top of a cake layer
+    function drawIcing(x, y, width, amplitude, frequency) {
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      const steps = 30;
+      for (let i = 0; i <= steps; i++) {
+        let posX = x + (i / steps) * width;
+        let posY = y + Math.sin((i / steps) * Math.PI * frequency) * amplitude;
+        ctx.lineTo(posX, posY);
+      }
+      ctx.strokeStyle = "#FFF";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    }
+
+    // Make the canvas responsive
+    function resizeCanvas() {
+      // Use up to 90% of the container width, max 600px
+      const containerWidth = Math.min(window.innerWidth * 0.9, 600);
+      canvas.width = containerWidth;
+      canvas.height = containerWidth * 0.8; // Maintain 4:3 aspect ratio
+      drawCake();
+    }
+
+    // Draw the cake with two layers, multiple candles, wicks, and flames
+    function drawCake() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const cw = canvas.width;
+      const ch = canvas.height;
+      
+      // --- Cake Layers ---
+      // Bottom Layer
+      const bottomLayerWidth = cw * 0.8;
+      const bottomLayerHeight = ch * 0.3;
+      const bottomLayerX = (cw - bottomLayerWidth) / 2;
+      const bottomLayerY = ch - bottomLayerHeight - 20;
+      const layerRadius = 15;
+      // Gradient for bottom layer (chocolate)
+      let chocolateGrad = ctx.createLinearGradient(bottomLayerX, bottomLayerY, bottomLayerX, bottomLayerY + bottomLayerHeight);
+      chocolateGrad.addColorStop(0, "#8B4513");
+      chocolateGrad.addColorStop(1, "#A0522D");
+      drawRoundedRect(ctx, bottomLayerX, bottomLayerY, bottomLayerWidth, bottomLayerHeight, layerRadius, chocolateGrad);
+      drawIcing(bottomLayerX, bottomLayerY, bottomLayerWidth, 8, 3);
+
+      // Top Layer
+      const topLayerWidth = cw * 0.5;
+      const topLayerHeight = ch * 0.2;
+      const topLayerX = (cw - topLayerWidth) / 2;
+      const topLayerY = bottomLayerY - topLayerHeight - 10;
+      let pinkGrad = ctx.createLinearGradient(topLayerX, topLayerY, topLayerX, topLayerY + topLayerHeight);
+      pinkGrad.addColorStop(0, "#FFC0CB");
+      pinkGrad.addColorStop(1, "#FFB6C1");
+      drawRoundedRect(ctx, topLayerX, topLayerY, topLayerWidth, topLayerHeight, layerRadius, pinkGrad);
+      drawIcing(topLayerX, topLayerY, topLayerWidth, 6, 4);
+
+      // --- Candles ---
+      const candleWidth = cw * 0.03;
+      const candleHeight = ch * 0.15;
+      const spacing = topLayerWidth / (numCandles + 1);
+
+      for (let i = 1; i <= numCandles; i++) {
+        const candleX = topLayerX + i * spacing - candleWidth / 2;
+        const candleY = topLayerY - candleHeight;
+
+        // Candle holder
+        const holderWidth = candleWidth * 1.5;
+        const holderHeight = candleWidth * 0.5;
+        const holderCenterX = candleX + candleWidth / 2;
+        const holderCenterY = candleY + candleHeight;
+        ctx.beginPath();
+        ctx.ellipse(holderCenterX, holderCenterY, holderWidth / 2, holderHeight, 0, 0, Math.PI, false);
+        let holderGrad = ctx.createLinearGradient(
+          holderCenterX - holderWidth / 2,
+          holderCenterY - holderHeight,
+          holderCenterX + holderWidth / 2,
+          holderCenterY + holderHeight
+        );
+        holderGrad.addColorStop(0, "#FF69B4");
+        holderGrad.addColorStop(1, "#FFA500");
+        ctx.fillStyle = holderGrad;
+        ctx.fill();
+        ctx.strokeStyle = "#333";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Candle body (polka-dot pastel)
+        drawPolkaDotCandle(candleX, candleY, candleWidth, candleHeight, candleWidth / 2);
+
+        // Wick
+        const wickWidth = candleWidth * 0.3;
+        const wickHeight = candleWidth * 0.6;
+        const wickX = candleX + candleWidth / 2 - wickWidth / 2;
+        const wickY = candleY - wickHeight;
+        ctx.fillStyle = "#000";
+        ctx.fillRect(wickX, wickY, wickWidth, wickHeight);
+
+        // Flame (if lit)
+        if (candlesLit || flameAlpha > 0) {
+          const flameCenterX = candleX + candleWidth / 2;
+          const flameCenterY = wickY;
+          const flameRadius = candleWidth * 1.5;
+          const grad = ctx.createRadialGradient(
+            flameCenterX,
+            flameCenterY,
+            0,
+            flameCenterX,
+            flameCenterY,
+            flameRadius
+          );
+          grad.addColorStop(0, `rgba(255, 215, 0, ${flameAlpha})`);
+          grad.addColorStop(1, `rgba(255, 69, 0, 0)`);
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(flameCenterX, flameCenterY, flameRadius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // Polka-dot pastel candle
+    function drawPolkaDotCandle(x, y, width, height, cornerRadius) {
+      // Pastel gradient
+      const candleGradient = ctx.createLinearGradient(x, y, x, y + height);
+      candleGradient.addColorStop(0, "#FDE2FF");
+      candleGradient.addColorStop(1, "#FAF2BE");
+
+      ctx.beginPath();
+      ctx.moveTo(x + cornerRadius, y);
+      ctx.lineTo(x + width - cornerRadius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + cornerRadius);
+      ctx.lineTo(x + width, y + height - cornerRadius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - cornerRadius, y + height);
+      ctx.lineTo(x + cornerRadius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - cornerRadius);
+      ctx.lineTo(x, y + cornerRadius);
+      ctx.quadraticCurveTo(x, y, x + cornerRadius, y);
+      ctx.closePath();
+      ctx.fillStyle = candleGradient;
+      ctx.fill();
+
+      // Clip for polka dots
+      ctx.save();
+      ctx.clip();
+
+      // Polka dots
+      const dotRadius = width * 0.15;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+      for (let dotY = y; dotY < y + height; dotY += dotRadius * 3) {
+        for (let dotX = x; dotX < x + width; dotX += dotRadius * 3) {
+          ctx.beginPath();
+          ctx.arc(dotX + dotRadius, dotY + dotRadius, dotRadius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+
+      // Thin outline
+      ctx.strokeStyle = "#999";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, width, height);
+    }
+
+    // Animate blowing out the candles, then redirect
+    function blowCandle() {
+      if (!candlesLit) return;
+      let start = null;
+      function animate(timestamp) {
+        if (!start) start = timestamp;
+        const progress = timestamp - start;
+        flameAlpha = Math.max(1 - progress / 1000, 0);
+        drawCake();
+        if (progress < 1000) {
+          requestAnimationFrame(animate);
+        } else {
+          candlesLit = false;
+          flameAlpha = 0;
+          drawCake();
+          setTimeout(() => {
+            // Redirect to birthday-card.html
+            window.location.href = "pictures.html";
+          }, 500);
+        }
+      }
+      requestAnimationFrame(animate);
+    }
+
+    blowButton.addEventListener('click', blowCandle);
+    window.addEventListener('resize', resizeCanvas);
+
+    // Initial draw
+    resizeCanvas();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
